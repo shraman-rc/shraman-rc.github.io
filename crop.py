@@ -1,6 +1,6 @@
 from __future__ import division, print_function
 
-import os
+import os, sys
 from PIL import Image, ImageOps, ImageDraw
 
 if __name__ == "__main__":
@@ -10,8 +10,10 @@ if __name__ == "__main__":
 
     parser.add_argument("path", type=str, default='shraman.jpg', metavar="[path]",
         help="Path to image.")
-    parser.add_argument("-r", "--resize", type=float, default=1.0, metavar="[scale]", dest="scale",
-        help="Resize by value in [0,1].")
+    parser.add_argument("-s", "--scale", type=float, default=[1.0], nargs="+", metavar="[scale]",
+        help="Resize by value in [0,1]. Can provide 1 or 2 values (width, height).")
+    parser.add_argument("-nc", "--nocircle", action="store_true",
+        help="Don't produce circular crop output.")
 
     args = parser.parse_args()
 
@@ -19,9 +21,13 @@ if __name__ == "__main__":
     base, ext = os.path.splitext(args.path)
     im = Image.open(args.path)
 
-    sz = (int(im.size[0]*args.scale), int(im.size[1]*args.scale))
-    im = im.resize(sz)
+    scale = args.scale*2 if len(args.scale) == 1 else args.scale
+    sz = (int(im.size[0]*scale[0]), int(im.size[1]*scale[1]))
+    im = im.resize(sz, Image.ANTIALIAS)
     im.save("{}-resized.png".format(base))
+
+    if args.nocircle:
+        sys.exit()
 
     mask = Image.new('L', sz, 0)
     c = (sz[0]//2, sz[1]//2)
